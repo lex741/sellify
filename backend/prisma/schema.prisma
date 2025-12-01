@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum Role {
+  ADMIN
+  MERCHANT
+  CUSTOMER
+}
+
+enum Currency {
+  UAH
+  USD
+  EUR
+}
+
+enum OrderStatus {
+  NEW
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stores  Store[]
+  orders  Order[]
+  reviews Review[]
+}
+
+model Store {
+  id          String   @id @default(uuid())
+  ownerUserId String
+  slug        String   @unique
+  name        String
+  description String?
+  logoUrl     String?
+  themeJson   Json?
+  isActive    Boolean  @default(true)
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User      @relation(fields: [ownerUserId], references: [id])
+  products Product[]
+  orders   Order[]
+  reviews  Review[]
+
+  @@index([ownerUserId])
+}
+
+model Product {
+  id             String    @id @default(uuid())
+  storeId         String
+  name            String
+  description     String?
+  priceAmount     Decimal
+  priceCurrency   Currency  @default(UAH)
+  stockQty        Int       @default(0)
+  imageUrl        String?
+  isActive        Boolean   @default(true)
+  isDeleted       Boolean   @default(false)
+
+  ratingAvg       Float     @default(0)
+  ratingCount     Int       @default(0)
+  ratingHistogram Json?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  store      Store       @relation(fields: [storeId], references: [id])
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  @@index([storeId, isDeleted, isActive, createdAt])
+  @@index([storeId, name])
+}
+
+model Order {
+  id                    String      @id @default(uuid())
+  storeId               String
+  customerUserId        String?
+
+  customerName          String
+  phone                 String
+  email                 String
+
+  deliveryCityRef       String?
+  deliveryCityName      String?
+  deliveryBranchRef     String?
+  deliveryBranchName    String?
+  deliveryAddressManual String?
+
+  status                OrderStatus @default(NEW)
+  totalUah              Decimal
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  store    Store      @relation(fields: [storeId], references: [id])
+  customer User?      @relation(fields: [customerUserId], references: [id])
+  items    OrderItem[]
+
+  @@index([storeId, createdAt])
+}
+
+model OrderItem {
+  id               String   @id @default(uuid())
+  orderId          String
+  productId        String
+  qty              Int
+  priceUahAtPurchase Decimal
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Review {
+  id                String   @id @default(uuid())
+  storeId            String
+  productId          String
+  customerUserId     String
+  rating             Int
+  text               String?
+  isVerifiedPurchase Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  store    Store   @relation(fields: [storeId], references: [id])
+  product  Product @relation(fields: [productId], references: [id])
+  customer User    @relation(fields: [customerUserId], references: [id])
+
+  @@unique([productId, customerUserId])
+  @@index([storeId, productId, createdAt])
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  source    String
+  baseCcy   String
+  quoteCcy  String
+  rate      Decimal
+  fetchedAt DateTime
+
+  @@index([source, fetchedAt])
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String
+  source    String
+  message   String
+  metaJson  Json?
+  createdAt DateTime @default(now())
+
+  @@index([level, createdAt])
+  @@index([source, createdAt])
+}
+
