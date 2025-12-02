@@ -67,7 +67,7 @@
 .previewRoot {
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-base);
+    font-family: var(--font-base, system-ui), sans-serif;
     border-radius: 16px;
     padding: 18px;
     min-height: 540px;
@@ -111,7 +111,7 @@
 .storeName {
     font-weight: 800;
     font-size: 18px;
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, system-ui), sans-serif;
 }
 
 .storeDesc {

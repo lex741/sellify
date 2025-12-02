@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { t } from "../i18n/t.js";
 import "./constructor.css";
 
 const defaultThemeConfig = {
@@ -14,14 +15,14 @@ const defaultThemeConfig = {
         fonts: { base: "system-ui", heading: "system-ui" },
     },
     layout: [
-        { type: "banner", props: { title: "Welcome", subtitle: "Best deals" } },
-        { type: "productGrid", props: { title: "Products", columns: 3 } },
-        { type: "footer", props: { text: "© 2025 Sellify" } },
+        { type: "banner", props: { title: "Ласкаво просимо", subtitle: "Найкращі пропозиції" } },
+        { type: "productGrid", props: { title: t("constructor.productsBlock"), columns: 3 } },
+        { type: "footer", props: { text: t("constructor.footerDefault") } },
     ],
     content: {
-        headline: "My Store",
+        headline: "Мій магазин",
         subtitle: "Live preview",
-        footerText: "© 2025 Sellify",
+        footerText: t("constructor.footerDefault"),
         logoUrl: null,
         links: [],
     },
@@ -51,17 +52,14 @@ function StorePreview({ config, store }) {
                 <div className="previewHeader">
                     <div className="logoBox">
                         {(config.content.logoUrl || store?.logoUrl) ? (
-                            <img
-                                alt="logo"
-                                src={config.content.logoUrl || store?.logoUrl}
-                                className="logoImg"
-                            />
+                            <img alt="logo" src={config.content.logoUrl || store?.logoUrl} className="logoImg" />
                         ) : (
-                            <div className="logoPlaceholder">LOGO</div>
+                            <div className="logoPlaceholder">{t("constructor.logoPlaceholder")}</div>
                         )}
                     </div>
+
                     <div>
-                        <div className="storeName">{store?.name || "Store"}</div>
+                        <div className="storeName">{store?.name || "Магазин"}</div>
                         <div className="storeDesc">{store?.description || ""}</div>
                     </div>
                 </div>
@@ -70,9 +68,9 @@ function StorePreview({ config, store }) {
                     if (block.type === "banner") {
                         return (
                             <div key={idx} className="card">
-                                <h2 className="h">{block.props?.title || config.content.headline || "Headline"}</h2>
-                                <p className="p">{block.props?.subtitle || config.content.subtitle || "Subtitle"}</p>
-                                <button className="btn">Shop now</button>
+                                <h2 className="h">{block.props?.title || config.content.headline || "Заголовок"}</h2>
+                                <p className="p">{block.props?.subtitle || config.content.subtitle || "Підзаголовок"}</p>
+                                <button className="btn">{t("constructor.previewBtn")}</button>
                             </div>
                         );
                     }
@@ -81,13 +79,15 @@ function StorePreview({ config, store }) {
                         const cols = Number(block.props?.columns || 3);
                         return (
                             <div key={idx} className="card">
-                                <div className="gridTitle">{block.props?.title || "Products"}</div>
+                                <div className="gridTitle">{block.props?.title || t("constructor.productsBlock")}</div>
                                 <div className="grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
                                     {Array.from({ length: cols * 2 }).map((_, i) => (
                                         <div key={i} className="productCard">
                                             <div className="productImg" />
-                                            <div className="productName">Product {i + 1}</div>
-                                            <div className="productPrice">199 ₴</div>
+                                            <div className="productName">
+                                                {t("constructor.product")} {i + 1}
+                                            </div>
+                                            <div className="productPrice">{t("constructor.price")}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -98,7 +98,7 @@ function StorePreview({ config, store }) {
                     if (block.type === "footer") {
                         return (
                             <div key={idx} className="footer">
-                                {block.props?.text || config.content.footerText || "© 2025 Sellify"}
+                                {block.props?.text || config.content.footerText || t("constructor.footerDefault")}
                             </div>
                         );
                     }
@@ -118,7 +118,6 @@ export default function Constructor() {
     const [msg, setMsg] = useState(null);
     const [err, setErr] = useState(null);
 
-    // окремо локальні поля магазину (бо PUT /stores/me)
     const [storeName, setStoreName] = useState("");
     const [storeDesc, setStoreDesc] = useState("");
     const [storeLogo, setStoreLogo] = useState("");
@@ -138,7 +137,7 @@ export default function Constructor() {
                 const cfg = s.themeConfig ? s.themeConfig : defaultThemeConfig;
                 setDraft(deepClone(cfg));
             } catch (e2) {
-                setErr(e2.message);
+                setErr(e2.message || "Невідома помилка");
             }
         })();
     }, [token]);
@@ -146,10 +145,7 @@ export default function Constructor() {
     function setColor(key, value) {
         setDraft((prev) => ({
             ...prev,
-            theme: {
-                ...prev.theme,
-                colors: { ...prev.theme.colors, [key]: value },
-            },
+            theme: { ...prev.theme, colors: { ...prev.theme.colors, [key]: value } },
         }));
     }
 
@@ -157,9 +153,7 @@ export default function Constructor() {
         setDraft((prev) => ({
             ...prev,
             layout: prev.layout.map((b) =>
-                b.type === "banner"
-                    ? { ...b, props: { ...(b.props || {}), title: value } }
-                    : b
+                b.type === "banner" ? { ...b, props: { ...(b.props || {}), title: value } } : b
             ),
         }));
     }
@@ -168,9 +162,7 @@ export default function Constructor() {
         setDraft((prev) => ({
             ...prev,
             layout: prev.layout.map((b) =>
-                b.type === "banner"
-                    ? { ...b, props: { ...(b.props || {}), subtitle: value } }
-                    : b
+                b.type === "banner" ? { ...b, props: { ...(b.props || {}), subtitle: value } } : b
             ),
         }));
     }
@@ -193,35 +185,24 @@ export default function Constructor() {
             setMsg(null);
             setErr(null);
 
-            // 1) Зберігаємо дані магазину
             await api("/stores/me", {
                 method: "PUT",
                 token,
-                body: {
-                    name: storeName,
-                    description: storeDesc || null,
-                    logoUrl: storeLogo ? storeLogo : null,
-                },
+                body: { name: storeName, description: storeDesc || null, logoUrl: storeLogo ? storeLogo : null },
             });
 
-            // 2) Зберігаємо конфіг теми (JSON)
-            await api("/stores/me/theme", {
-                method: "PUT",
-                token,
-                body: draft,
-            });
+            await api("/stores/me/theme", { method: "PUT", token, body: draft });
 
-            setMsg("Saved");
+            setMsg(t("common.saved"));
         } catch (e2) {
-            setErr(e2.message);
+            setErr(e2.message || "Невідома помилка");
         } finally {
             setSaving(false);
         }
     }
 
-    if (!draft) return <div>Loading...</div>;
+    if (!draft) return <div>{t("common.loading")}</div>;
 
-    // Значення для controls
     const banner = draft.layout.find((b) => b.type === "banner")?.props || {};
     const grid = draft.layout.find((b) => b.type === "productGrid")?.props || {};
     const cols = grid.columns || 3;
@@ -229,85 +210,86 @@ export default function Constructor() {
     return (
         <div className="constructorGrid">
             <div className="leftPanel">
-                <h2>Settings / Constructor</h2>
+                <h2>{t("constructor.title")}</h2>
 
                 <div className="section">
-                    <div className="sectionTitle">Store info</div>
+                    <div className="sectionTitle">{t("constructor.storeInfo")}</div>
 
                     <label className="lbl">
-                        Name
+                        {t("constructor.name")}
                         <input className="inp" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
                     </label>
 
                     <label className="lbl">
-                        Description
+                        {t("constructor.description")}
                         <textarea className="inp" rows={3} value={storeDesc} onChange={(e) => setStoreDesc(e.target.value)} />
                     </label>
 
                     <label className="lbl">
-                        Logo URL
+                        {t("constructor.logoUrl")}
                         <input className="inp" value={storeLogo} onChange={(e) => setStoreLogo(e.target.value)} />
                     </label>
                 </div>
 
                 <div className="section">
-                    <div className="sectionTitle">Theme colors</div>
+                    <div className="sectionTitle">{t("constructor.themeColors")}</div>
 
                     <div className="row">
-                        <div>Background</div>
+                        <div>{t("constructor.background")}</div>
                         <input type="color" value={draft.theme.colors.background} onChange={(e) => setColor("background", e.target.value)} />
                     </div>
+
                     <div className="row">
-                        <div>Text</div>
+                        <div>{t("constructor.text")}</div>
                         <input type="color" value={draft.theme.colors.text} onChange={(e) => setColor("text", e.target.value)} />
                     </div>
+
                     <div className="row">
-                        <div>Accent</div>
+                        <div>{t("constructor.accent")}</div>
                         <input type="color" value={draft.theme.colors.accent} onChange={(e) => setColor("accent", e.target.value)} />
                     </div>
+
                     <div className="row">
-                        <div>Surface</div>
+                        <div>{t("constructor.surface")}</div>
                         <input type="color" value={draft.theme.colors.surface} onChange={(e) => setColor("surface", e.target.value)} />
                     </div>
                 </div>
 
                 <div className="section">
-                    <div className="sectionTitle">Layout</div>
+                    <div className="sectionTitle">{t("constructor.layout")}</div>
 
                     <label className="lbl">
-                        Banner title
+                        {t("constructor.bannerTitle")}
                         <input className="inp" value={banner.title || ""} onChange={(e) => setBannerTitle(e.target.value)} />
                     </label>
 
                     <label className="lbl">
-                        Banner subtitle
+                        {t("constructor.bannerSubtitle")}
                         <input className="inp" value={banner.subtitle || ""} onChange={(e) => setBannerSubtitle(e.target.value)} />
                     </label>
 
                     <label className="lbl">
-                        Product grid columns (2..4)
-                        <input
-                            className="inp"
-                            type="number"
-                            min={2}
-                            max={4}
-                            value={cols}
-                            onChange={(e) => setGridColumns(e.target.value)}
-                        />
+                        {t("constructor.gridColumns")}
+                        <input className="inp" type="number" min={2} max={4} value={cols} onChange={(e) => setGridColumns(e.target.value)} />
                     </label>
                 </div>
 
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                     <button onClick={onSave} disabled={saving}>
-                        {saving ? "Saving..." : "Save"}
+                        {saving ? t("common.saving") : t("common.save")}
                     </button>
+
                     {msg && <span style={{ color: "green" }}>{msg}</span>}
-                    {err && <span style={{ color: "crimson" }}>{err}</span>}
+                    {err && (
+                        <span style={{ color: "crimson" }}>
+              {t("common.errorPrefix")} {err}
+            </span>
+                    )}
                 </div>
             </div>
 
             <div className="rightPanel">
-                <div className="previewTitle">Preview</div>
+                <div className="previewTitle">{t("constructor.preview")}</div>
                 <StorePreview config={draft} store={{ ...store, name: storeName, description: storeDesc, logoUrl: storeLogo }} />
             </div>
         </div>

@@ -9,27 +9,31 @@ import Products from "./pages/Products.jsx";
 import Orders from "./pages/Orders.jsx";
 import Constructor from "./pages/Constructor.jsx";
 
+import { t } from "./i18n/t.js";
+
 function Layout({ children }) {
     const { token, setToken } = useAuth();
 
     return (
-        <div style={{ fontFamily: "system-ui", padding: 16 }}>
+        <div style={{ fontFamily: "system-ui", padding: 16, maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
-                <Link to="/dashboard">Dashboard</Link>
-                <Link to="/products">Products</Link>
-                <Link to="/orders">Orders</Link>
-                <Link to="/constructor">Settings/Constructor</Link>
+                {token ? (
+                    <>
+                        <Link to="/dashboard">{t("nav.dashboard")}</Link>
+                        <Link to="/products">{t("nav.products")}</Link>
+                        <Link to="/orders">{t("nav.orders")}</Link>
+                        <Link to="/constructor">{t("nav.constructor")}</Link>
 
-                <div style={{ marginLeft: "auto" }}>
-                    {token ? (
-                        <button onClick={() => setToken(null)}>Logout</button>
-                    ) : (
-                        <>
-                            <Link to="/login">Login</Link> {" | "}
-                            <Link to="/register">Register</Link>
-                        </>
-                    )}
-                </div>
+                        <div style={{ marginLeft: "auto" }}>
+                            <button onClick={() => setToken(null)}>{t("nav.logout")}</button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login">{t("nav.login")}</Link>
+                        <Link to="/register">{t("nav.register")}</Link>
+                    </>
+                )}
             </div>
 
             {children}
@@ -48,7 +52,9 @@ export default function App() {
                         path="/dashboard"
                         element={
                             <RequireAuth>
-                                <Layout><Dashboard /></Layout>
+                                <Layout>
+                                    <Dashboard />
+                                </Layout>
                             </RequireAuth>
                         }
                     />
@@ -57,7 +63,9 @@ export default function App() {
                         path="/products"
                         element={
                             <RequireAuth>
-                                <Layout><Products /></Layout>
+                                <Layout>
+                                    <Products />
+                                </Layout>
                             </RequireAuth>
                         }
                     />
@@ -66,7 +74,9 @@ export default function App() {
                         path="/orders"
                         element={
                             <RequireAuth>
-                                <Layout><Orders /></Layout>
+                                <Layout>
+                                    <Orders />
+                                </Layout>
                             </RequireAuth>
                         }
                     />
@@ -75,15 +85,39 @@ export default function App() {
                         path="/constructor"
                         element={
                             <RequireAuth>
-                                <Layout><Constructor /></Layout>
+                                <Layout>
+                                    <Constructor />
+                                </Layout>
                             </RequireAuth>
                         }
                     />
 
-                    <Route path="/login" element={<Layout><Login /></Layout>} />
-                    <Route path="/register" element={<Layout><Register /></Layout>} />
+                    <Route
+                        path="/login"
+                        element={
+                            <Layout>
+                                <Login />
+                            </Layout>
+                        }
+                    />
 
-                    <Route path="*" element={<div>Not found</div>} />
+                    <Route
+                        path="/register"
+                        element={
+                            <Layout>
+                                <Register />
+                            </Layout>
+                        }
+                    />
+
+                    <Route
+                        path="*"
+                        element={
+                            <Layout>
+                                <div>{t("common.notFound")}</div>
+                            </Layout>
+                        }
+                    />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>
