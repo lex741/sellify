@@ -4,6 +4,7 @@ import authRoutes from "./auth.routes.js";
 import storePublicRoutes from "./store.public.routes.js";
 import merchantRoutes from "./merchant/index.js";
 import productsRoutes from "./products.routes.js";
+import publicStoreProductsRoutes from "./publicStoreProducts.routes.js";
 
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -13,8 +14,8 @@ import storesRoutes from "./stores.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/store", publicStoreProductsRoutes);
 
-// Public storefront
 router.use("/store/:slug", tenantFromSlug, storePublicRoutes);
 router.use(
     "/products",
