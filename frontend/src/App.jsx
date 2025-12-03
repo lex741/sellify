@@ -9,6 +9,12 @@ import Products from "./pages/Products.jsx";
 import Orders from "./pages/Orders.jsx";
 import Constructor from "./pages/Constructor.jsx";
 
+import StorefrontLayout from "./storefront/StorefrontLayout.jsx";
+import StoreHome from "./storefront/StoreHome.jsx";
+import ProductPage from "./storefront/ProductPage.jsx";
+import CartPage from "./storefront/CartPage.jsx";
+import CheckoutPage from "./storefront/CheckoutPage.jsx";
+
 import { t } from "./i18n/t.js";
 
 function Layout({ children }) {
@@ -46,6 +52,7 @@ export default function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
+                    {/* Merchant panel */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                     <Route
@@ -110,6 +117,15 @@ export default function App() {
                         }
                     />
 
+                    {/* Storefront (публічна вітрина) */}
+                    <Route path="/store/:slug" element={<StorefrontLayout />}>
+                        <Route index element={<StoreHome />} />
+                        <Route path="product/:productId" element={<ProductPage />} />
+                        <Route path="cart" element={<CartPage />} />
+                        <Route path="checkout" element={<CheckoutPage />} />
+                    </Route>
+
+                    {/* 404 */}
                     <Route
                         path="*"
                         element={

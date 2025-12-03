@@ -106,7 +106,6 @@ export const RatesService = {
     async initFromDb() {
         // беремо останні збережені курси (те, що ми використовували як best)
         const rows = await prisma.exchangeRate.findMany({
-            where: { isDeleted: false },
             orderBy: { fetchedAt: "desc" },
             take: 50,
             select: { quoteCcy: true, rateToUah: true, fetchedAt: true },

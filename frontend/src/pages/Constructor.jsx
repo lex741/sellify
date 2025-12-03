@@ -32,6 +32,23 @@ function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
 
+function normalizeConfig(input) {
+    const base = deepClone(defaultThemeConfig);
+    const cfg = input && typeof input === "object" ? input : {};
+
+    base.theme = base.theme || {};
+    base.theme.colors = { ...base.theme.colors, ...(cfg.theme?.colors || {}) };
+    base.theme.fonts = { ...base.theme.fonts, ...(cfg.theme?.fonts || {}) };
+
+    base.content = { ...base.content, ...(cfg.content || {}) };
+
+    if (Array.isArray(cfg.layout) && cfg.layout.length > 0) {
+        base.layout = cfg.layout;
+    }
+    // якщо layout порожній/відсутній — лишаємо дефолтні блоки
+    return base;
+}
+
 function StorePreview({ config, store }) {
     const vars = useMemo(() => {
         const c = config.theme.colors;
@@ -51,7 +68,7 @@ function StorePreview({ config, store }) {
             <div className="previewFrame">
                 <div className="previewHeader">
                     <div className="logoBox">
-                        {(config.content.logoUrl || store?.logoUrl) ? (
+                        {config.content.logoUrl || store?.logoUrl ? (
                             <img alt="logo" src={config.content.logoUrl || store?.logoUrl} className="logoImg" />
                         ) : (
                             <div className="logoPlaceholder">{t("constructor.logoPlaceholder")}</div>
@@ -134,8 +151,9 @@ export default function Constructor() {
                 setStoreDesc(s.description || "");
                 setStoreLogo(s.logoUrl || "");
 
-                const cfg = s.themeConfig ? s.themeConfig : defaultThemeConfig;
-                setDraft(deepClone(cfg));
+                // FIX: у тебе поле themeJson, а не themeConfig
+                const rawCfg = s.themeJson ?? s.themeConfig ?? defaultThemeConfig;
+                setDraft(normalizeConfig(rawCfg));
             } catch (e2) {
                 setErr(e2.message || "Невідома помилка");
             }
@@ -191,7 +209,12 @@ export default function Constructor() {
                 body: { name: storeName, description: storeDesc || null, logoUrl: storeLogo ? storeLogo : null },
             });
 
-            await api("/stores/me/theme", { method: "PUT", token, body: draft });
+            // FIX: слати themeJson явно (бекенд так простіше/стабільніше обробляє)
+            await api("/stores/me/theme", {
+                method: "PUT",
+                token,
+                body: { themeJson: draft },
+            });
 
             setMsg(t("common.saved"));
         } catch (e2) {
@@ -236,7 +259,11 @@ export default function Constructor() {
 
                     <div className="row">
                         <div>{t("constructor.background")}</div>
-                        <input type="color" value={draft.theme.colors.background} onChange={(e) => setColor("background", e.target.value)} />
+                        <input
+                            type="color"
+                            value={draft.theme.colors.background}
+                            onChange={(e) => setColor("background", e.target.value)}
+                        />
                     </div>
 
                     <div className="row">
@@ -246,12 +273,20 @@ export default function Constructor() {
 
                     <div className="row">
                         <div>{t("constructor.accent")}</div>
-                        <input type="color" value={draft.theme.colors.accent} onChange={(e) => setColor("accent", e.target.value)} />
+                        <input
+                            type="color"
+                            value={draft.theme.colors.accent}
+                            onChange={(e) => setColor("accent", e.target.value)}
+                        />
                     </div>
 
                     <div className="row">
                         <div>{t("constructor.surface")}</div>
-                        <input type="color" value={draft.theme.colors.surface} onChange={(e) => setColor("surface", e.target.value)} />
+                        <input
+                            type="color"
+                            value={draft.theme.colors.surface}
+                            onChange={(e) => setColor("surface", e.target.value)}
+                        />
                     </div>
                 </div>
 
@@ -270,7 +305,14 @@ export default function Constructor() {
 
                     <label className="lbl">
                         {t("constructor.gridColumns")}
-                        <input className="inp" type="number" min={2} max={4} value={cols} onChange={(e) => setGridColumns(e.target.value)} />
+                        <input
+                            className="inp"
+                            type="number"
+                            min={2}
+                            max={4}
+                            value={cols}
+                            onChange={(e) => setGridColumns(e.target.value)}
+                        />
                     </label>
                 </div>
 

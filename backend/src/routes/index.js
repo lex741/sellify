@@ -1,22 +1,25 @@
 import { Router } from "express";
-import authRoutes from "./auth.routes.js";
 
-import storePublicRoutes from "./store.public.routes.js";
+import authRoutes from "./auth.routes.js";
+import publicStoreRoutes from "./publicStore.routes.js";
+
 import merchantRoutes from "./merchant/index.js";
 import productsRoutes from "./products.routes.js";
-import publicStoreProductsRoutes from "./publicStoreProducts.routes.js";
+import storesRoutes from "./stores.routes.js";
 
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
-import { tenantFromSlug, tenantFromToken } from "../middleware/tenant.js";
-import storesRoutes from "./stores.routes.js";
+import { tenantFromToken } from "../middleware/tenant.js";
 
 const router = Router();
 
+// Auth
 router.use("/auth", authRoutes);
-router.use("/store", publicStoreProductsRoutes);
 
-router.use("/store/:slug", tenantFromSlug, storePublicRoutes);
+// Public Storefront
+router.use("/store", publicStoreRoutes);
+
+// Merchant area
 router.use(
     "/products",
     requireAuth,
@@ -24,7 +27,21 @@ router.use(
     tenantFromToken,
     productsRoutes
 );
-// Merchant area
-router.use("/merchant", requireAuth, requireRole("MERCHANT", "ADMIN"), tenantFromToken, merchantRoutes);
-router.use("/stores", requireAuth, requireRole("MERCHANT", "ADMIN"), tenantFromToken, storesRoutes);
+
+router.use(
+    "/merchant",
+    requireAuth,
+    requireRole("MERCHANT", "ADMIN"),
+    tenantFromToken,
+    merchantRoutes
+);
+
+router.use(
+    "/stores",
+    requireAuth,
+    requireRole("MERCHANT", "ADMIN"),
+    tenantFromToken,
+    storesRoutes
+);
+
 export default router;
